@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!-- <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -217,5 +217,271 @@
     </div>
 
     <script src="script.js"></script>
+</body>
+
+</html> -->
+
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Disk Scheduling Simulator</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="floating-bg">
+        <div class="floating-disk disk-1"></div>
+        <div class="floating-disk disk-2"></div>
+    </div>
+    
+    <div class="particles" id="particles"></div>
+
+    <div class="container">
+        <div class="header">
+            <h1>Advanced Disk Scheduling Simulator</h1>
+            <p class="subtitle">
+                <i class="fas fa-microchip"></i> Visualize and compare disk scheduling algorithms in real-time with advanced animations and detailed analytics
+            </p>
+        </div>
+
+        <div class="input-section">
+            <div class="input-group">
+                <label for="req"><i class="fas fa-list-ol"></i> Disk Requests</label>
+                <input id="req" type="text" placeholder="98, 183, 37, 122, 14, 124, 65, 67" value="98, 183, 37, 122, 14, 124, 65, 67">
+            </div>
+            
+            <div class="input-group">
+                <label for="head"><i class="fas fa-crosshairs"></i> Head Position</label>
+                <input id="head" type="number" value="53" min="0" max="199">
+            </div>
+            
+            <div class="input-group">
+                <label for="disk"><i class="fas fa-compact-disc"></i> Disk Size</label>
+                <input id="disk" type="number" value="200">
+            </div>
+            
+            <div class="input-group">
+                <label for="dir"><i class="fas fa-directions"></i> Direction</label>
+                <select id="dir">
+                    <option value="1">Right →</option>
+                    <option value="-1">Left ←</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="button-group">
+            <button class="run-btn" id="run-btn">
+                <i class="fas fa-play-circle"></i> Run All Algorithms
+            </button>
+            <button class="reset-btn" id="reset-btn">
+                <i class="fas fa-redo"></i> Reset
+            </button>
+        </div>
+
+        <div class="track-container">
+            <div class="track-label">
+                <span><i class="fas fa-arrow-left"></i> 0</span>
+                <span id="disk-size-label">200 <i class="fas fa-arrow-right"></i></span>
+            </div>
+            <div class="track" id="track">
+                <div class="pointer" id="pointer"></div>
+            </div>
+        </div>
+
+        <div class="results">
+            <div class="algorithm-box" id="fcfs-box">
+                <div class="algo-header fcfs-header">
+                    <i class="fas fa-sort-amount-down"></i> FCFS Algorithm
+                </div>
+                <div class="metrics">
+                    <div class="metric">
+                        <span class="metric-label"><i class="fas fa-ruler"></i> Total Seek Time</span>
+                        <span class="metric-value" id="fcfs-total">-</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label"><i class="fas fa-calculator"></i> Average Seek Time</span>
+                        <span class="metric-value" id="fcfs-avg">-</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label"><i class="fas fa-tachometer-alt"></i> Throughput</span>
+                        <span class="metric-value" id="fcfs-throughput">-</span>
+                    </div>
+                </div>
+                <div class="path" id="fcfs-path">
+                    <i class="fas fa-route"></i> Path will appear here...
+                </div>
+            </div>
+
+            <div class="algorithm-box" id="sstf-box">
+                <div class="algo-header sstf-header">
+                    <i class="fas fa-bolt"></i> SSTF Algorithm
+                </div>
+                <div class="metrics">
+                    <div class="metric">
+                        <span class="metric-label"><i class="fas fa-ruler"></i> Total Seek Time</span>
+                        <span class="metric-value" id="sstf-total">-</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label"><i class="fas fa-calculator"></i> Average Seek Time</span>
+                        <span class="metric-value" id="sstf-avg">-</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label"><i class="fas fa-tachometer-alt"></i> Throughput</span>
+                        <span class="metric-value" id="sstf-throughput">-</span>
+                    </div>
+                </div>
+                <div class="path" id="sstf-path">
+                    <i class="fas fa-route"></i> Path will appear here...
+                </div>
+            </div>
+
+            <div class="algorithm-box" id="scan-box">
+                <div class="algo-header scan-header">
+                    <i class="fas fa-elevator"></i> SCAN Algorithm
+                </div>
+                <div class="metrics">
+                    <div class="metric">
+                        <span class="metric-label"><i class="fas fa-ruler"></i> Total Seek Time</span>
+                        <span class="metric-value" id="scan-total">-</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label"><i class="fas fa-calculator"></i> Average Seek Time</span>
+                        <span class="metric-value" id="scan-avg">-</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label"><i class="fas fa-tachometer-alt"></i> Throughput</span>
+                        <span class="metric-value" id="scan-throughput">-</span>
+                    </div>
+                </div>
+                <div class="path" id="scan-path">
+                    <i class="fas fa-route"></i> Path will appear here...
+                </div>
+            </div>
+
+            <div class="algorithm-box" id="cscan-box">
+                <div class="algo-header cscan-header">
+                    <i class="fas fa-sync-alt"></i> C-SCAN Algorithm
+                </div>
+                <div class="metrics">
+                    <div class="metric">
+                        <span class="metric-label"><i class="fas fa-ruler"></i> Total Seek Time</span>
+                        <span class="metric-value" id="cscan-total">-</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label"><i class="fas fa-calculator"></i> Average Seek Time</span>
+                        <span class="metric-value" id="cscan-avg">-</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label"><i class="fas fa-tachometer-alt"></i> Throughput</span>
+                        <span class="metric-value" id="cscan-throughput">-</span>
+                    </div>
+                </div>
+                <div class="path" id="cscan-path">
+                    <i class="fas fa-route"></i> Path will appear here...
+                </div>
+            </div>
+        </div>
+
+        <div class="comparison">
+            <div class="comparison-header">Performance Comparison</div>
+            <div class="chart-container">
+                <div class="bar-wrapper">
+                    <div class="bar bar-fcfs" id="fcfs-bar" style="height: 0%;">
+                        <div class="bar-value" id="fcfs-bar-value">0</div>
+                    </div>
+                    <div class="bar-label">FCFS</div>
+                </div>
+                <div class="bar-wrapper">
+                    <div class="bar bar-sstf" id="sstf-bar" style="height: 0%;">
+                        <div class="bar-value" id="sstf-bar-value">0</div>
+                    </div>
+                    <div class="bar-label">SSTF</div>
+                </div>
+                <div class="bar-wrapper">
+                    <div class="bar bar-scan" id="scan-bar" style="height: 0%;">
+                        <div class="bar-value" id="scan-bar-value">0</div>
+                    </div>
+                    <div class="bar-label">SCAN</div>
+                </div>
+                <div class="bar-wrapper">
+                    <div class="bar bar-cscan" id="cscan-bar" style="height: 0%;">
+                        <div class="bar-value" id="cscan-bar-value">0</div>
+                    </div>
+                    <div class="bar-label">C-SCAN</div>
+                </div>
+            </div>
+            <div class="legend">
+                <div class="legend-item">
+                    <div class="legend-color legend-fcfs"></div>
+                    <span>FCFS (First-Come, First-Served)</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color legend-sstf"></div>
+                    <span>SSTF (Shortest Seek Time First)</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color legend-scan"></div>
+                    <span>SCAN (Elevator Algorithm)</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color legend-cscan"></div>
+                    <span>C-SCAN (Circular SCAN)</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Gantt Chart Section - Added for CA2 Requirements -->
+        <div class="gantt-section">
+            <h2 class="gantt-header">
+                <i class="fas fa-chart-bar"></i> Gantt Chart Visualization
+            </h2>
+            <div class="gantt-container">
+                <div class="gantt-chart" id="ganttChart">
+                    <!-- Gantt bars will be generated here -->
+                    <div class="gantt-placeholder">
+                        <i class="fas fa-chart-line"></i>
+                        <p>Run simulation to view Gantt Chart</p>
+                        <small>Shows execution sequence of each algorithm</small>
+                    </div>
+                </div>
+                <div class="gantt-info">
+                    <div class="gantt-legend">
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #00ffcc;"></div>
+                            <span>FCFS Algorithm</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #ff3366;"></div>
+                            <span>SSTF Algorithm</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #ffcc00;"></div>
+                            <span>SCAN Algorithm</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #9966ff;"></div>
+                            <span>C-SCAN Algorithm</span>
+                        </div>
+                    </div>
+                    <div class="gantt-help">
+                        <i class="fas fa-info-circle"></i>
+                        <span>Each bar represents seek distance between consecutive requests</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="notification" id="notification">
+        <i class="fas fa-check-circle"></i>
+        <span>Simulation completed successfully!</span>
+    </div>
+
+    <script src="scriptt.js"></script>
 </body>
 </html>
