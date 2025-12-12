@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Disk Scheduling Simulator</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
+        body { background: linear-gradient(135deg, #1a1a2e, #16213e); min-height: 100vh; padding: 20px; }
+        .container { max-width: 1200px; margin: 0 auto; background: rgba(255,255,255,0.05); padding: 25px; border-radius: 20px; backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); }
+        .header { text-align: center; margin-bottom: 25px; }
+        h1 { color: #00ffcc; font-size: 32px; margin-bottom: 10px; }
+        .input-section { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 25px; }
+        label { display: block; color: white; margin-bottom: 8px; font-weight: 500; }
+        input, select { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2); background: rgba(0,0,0,0.3); color: white; font-size: 16px; }
+        .button-group { display: flex; gap: 15px; margin: 20px 0; }
+        button { flex: 1; padding: 15px; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; transition: transform 0.3s; }
+        button:hover { transform: translateY(-3px); }
+        .run-btn { background: linear-gradient(135deg, #00ffcc, #009999); color: #003333; }
+        .reset-btn { background: linear-gradient(135deg, #ff3366, #cc0033); color: white; }
+        .track-container { background: rgba(0,0,0,0.3); padding: 20px; border-radius: 15px; margin: 25px 0; }
+        .track { width: 100%; height: 20px; background: rgba(255,255,255,0.1); border-radius: 10px; position: relative; }
+        .pointer { width: 25px; height: 25px; background: #00ffcc; border-radius: 50%; position: absolute; top: -2px; transition: left 0.5s; box-shadow: 0 0 15px #00ffcc; }
+        .request-dot { position: absolute; width: 12px; height: 12px; border-radius: 50%; top: 4px; transform: translateX(-50%); background: #ff3366; }
+        .results { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-top: 30px; }
+        .algorithm-box { background: rgba(255,255,255,0.05); padding: 20px; border-radius: 15px; border-left: 4px solid; }
+        .fcfs-box { border-color: #00ffcc; }
+        .sstf-box { border-color: #ff3366; }
+        .scan-box { border-color: #ffcc00; }
+        .cscan-box { border-color: #9966ff; }
+        .algo-header { color: white; font-size: 20px; margin-bottom: 15px; }
+        .metric { display: flex; justify-content: space-between; color: white; margin-bottom: 10px; padding: 10px; background: rgba(0,0,0,0.2); border-radius: 8px; }
+        .path { margin-top: 15px; padding: 10px; background: rgba(0,0,0,0.3); border-radius: 8px; color: rgba(255,255,255,0.8); font-size: 14px; max-height: 80px; overflow-y: auto; }
+        
+        /* Gantt Chart Section */
+        .gantt-section { margin-top: 30px; background: rgba(255,255,255,0.05); padding: 25px; border-radius: 15px; }
+        .gantt-header { color: white; font-size: 24px; text-align: center; margin-bottom: 20px; }
+        .gantt-container { background: rgba(0,0,0,0.2); padding: 20px; border-radius: 10px; }
+        .gantt-chart { display: flex; flex-direction: column; gap: 15px; }
+        .gantt-algorithm { display: flex; align-items: center; gap: 15px; }
+        .gantt-algo-label { min-width: 60px; color: white; font-weight: 600; }
+        .gantt-bars { flex: 1; display: flex; height: 30px; background: rgba(255,255,255,0.05); border-radius: 8px; overflow: hidden; }
+        .gantt-bar { height: 100%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 11px; transition: all 0.3s; }
+        .gantt-bar:hover { transform: scaleY(1.2); }
+        
+        .notification { position: fixed; bottom: 20px; right: 20px; background: #00ffcc; color: #003333; padding: 15px; border-radius: 10px; display: none; font-weight: 600; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
+        .notification.show { display: block; animation: slideIn 0.5s; }
+        @keyframes slideIn { from { transform: translateX(100%); } to { transform: translateX(0); } }
+        
+        @media (max-width: 768px) {
+            .input-section, .results { grid-template-columns: 1fr; }
+            .button-group { flex-direction: column; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Disk Scheduling Simulator</h1>
+            <p style="color: rgba(255,255,255,0.7);">Visualize disk scheduling algorithms in real-time</p>
+        </div>
+
+        <div class="input-section">
+            <div><label>Disk Requests</label><input id="req" value="98, 183, 37, 122, 14, 124, 65, 67"></div>
+            <div><label>Head Position</label><input id="head" type="number" value="53" min="0" max="199"></div>
+            <div><label>Disk Size</label><input id="disk" type="number" value="200"></div>
+            <div><label>Direction</label>
+                <select id="dir"><option value="1">Right →</option><option value="-1">Left ←</option></select>
+            </div>
+        </div>
+
+        <div class="button-group">
+            <button class="run-btn" id="run-btn">Run All Algorithms</button>
+            <button class="reset-btn" id="reset-btn">Reset</button>
+        </div>
+
+        <div class="track-container">
+            <div style="color: white; display: flex; justify-content: space-between; margin-bottom: 10px;">
+                <span>0</span><span id="disk-size-label">200</span>
+            </div>
+            <div class="track" id="track"><div class="pointer" id="pointer"></div></div>
+        </div>
+
+        <div class="results">
+            <div class="algorithm-box fcfs-box">
+                <div class="algo-header">FCFS Algorithm</div>
+                <div class="metric"><span>Total Seek:</span><span id="fcfs-total">-</span></div>
+                <div class="metric"><span>Average Seek:</span><span id="fcfs-avg">-</span></div>
+                <div class="path" id="fcfs-path">Path will appear here...</div>
+            </div>
+            <div class="algorithm-box sstf-box">
+                <div class="algo-header">SSTF Algorithm</div>
+                <div class="metric"><span>Total Seek:</span><span id="sstf-total">-</span></div>
+                <div class="metric"><span>Average Seek:</span><span id="sstf-avg">-</span></div>
+                <div class="path" id="sstf-path">Path will appear here...</div>
+            </div>
+            <div class="algorithm-box scan-box">
+                <div class="algo-header">SCAN Algorithm</div>
+                <div class="metric"><span>Total Seek:</span><span id="scan-total">-</span></div>
+                <div class="metric"><span>Average Seek:</span><span id="scan-avg">-</span></div>
+                <div class="path" id="scan-path">Path will appear here...</div>
+            </div>
+            <div class="algorithm-box cscan-box">
+                <div class="algo-header">C-SCAN Algorithm</div>
+                <div class="metric"><span>Total Seek:</span><span id="cscan-total">-</span></div>
+                <div class="metric"><span>Average Seek:</span><span id="cscan-avg">-</span></div>
+                <div class="path" id="cscan-path">Path will appear here...</div>
+            </div>
+        </div>
+
+        <!-- Gantt Chart Section -->
+        <div class="gantt-section">
+            <div class="gantt-header">Gantt Chart Visualization</div>
+            <div class="gantt-container">
+                <div id="ganttChart" style="color: rgba(255,255,255,0.7); text-align: center; padding: 20px;">
+                    Run simulation to view Gantt Chart
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="notification" id="notification">Simulation completed!</div>
+
+    <script>
+        class DiskScheduler {
+            static FCFS(req, head) {
+                let total = 0, path = [head];
+                for (let r of req) { total += Math.abs(head - r); head = r; path.push(r); }
+                return { total, avg: (total/req.length).toFixed(2), path };
+            }
+            
+            static SSTF(req, head) {
+                let used = new Array(req.length).fill(false);
+                let total = 0, count = 0, path = [head];
+                while (count < req.length) {
+                    let minDist = Infinity, minIndex = -1;
+                    for (let i = 0; i < req.length; i++) {
+                        if (!used[i]) {
+                            let dist = Math.abs(head - req[i]);
+                            if (dist < minDist) { minDist = dist; minIndex = i; }
+                        }
+                    }
+                    used[minIndex] = true;
+                    total += minDist;
+                    head = req[minIndex];
+                    path.push(head);
+                    count++;
+                }
+                return { total, avg: (total/req.length).toFixed(2), path };
+            }
+            
+            static SCAN(req, head, dir, size) {
+                let left = req.filter(r => r < head).sort((a,b)=>a-b);
+                let right = req.filter(r => r >= head).sort((a,b)=>a-b);
+                let total = 0, path = [head];
+                
+                if (dir === 1) {
+                    right.forEach(r => { total += Math.abs(head - r); head = r; path.push(r); });
+                    if (head !== size-1) { total += Math.abs(head - (size-1)); head = size-1; path.push(head); }
+                    for (let i = left.length-1; i >= 0; i--) { 
+                        total += Math.abs(head - left[i]); head = left[i]; path.push(head); 
+                    }
+                } else {
+                    for (let i = left.length-1; i >= 0; i--) { 
+                        total += Math.abs(head - left[i]); head = left[i]; path.push(head); 
+                    }
+                    if (head !== 0) { total += Math.abs(head - 0); head = 0; path.push(head); }
+                    right.forEach(r => { total += Math.abs(head - r); head = r; path.push(r); });
+                }
+                return { total, avg: (total/req.length).toFixed(2), path };
+            }
+            
+            static CSCAN(req, head, dir, size) {
+                let left = req.filter(r => r < head).sort((a,b)=>a-b);
+                let right = req.filter(r => r >= head).sort((a,b)=>a-b);
+                let total = 0, path = [head];
+                
+                if (dir === 1) {
+                    right.forEach(r => { total += Math.abs(head - r); head = r; path.push(r); });
+                    if (head !== size-1) { total += Math.abs(head - (size-1)); head = size-1; path.push(head); }
+                    if (left.length) { total += Math.abs(head - 0); head = 0; path.push(head); }
+                    left.forEach(r => { total += Math.abs(head - r); head = r; path.push(r); });
+                } else {
+                    for (let i = left.length-1; i >= 0; i--) { 
+                        total += Math.abs(head - left[i]); head = left[i]; path.push(head); 
+                    }
+                    if (head !== 0) { total += Math.abs(head - 0); head = 0; path.push(head); }
+                    if (right.length) { total += Math.abs(head - (size-1)); head = size-1; path.push(head); }
+                    for (let i = right.length-1; i >= 0; i--) { 
+                        total += Math.abs(head - right[i]); head = right[i]; path.push(head); 
+                    }
+                }
+                return { total, avg: (total/req.length).toFixed(2), path };
+            }
+        }
+
+        class UIController {
+            static updateTrack() {
+                let size = document.getElementById('disk').value;
+                document.getElementById('disk-size-label').textContent = size;
+            }
+            
+            static setPointer() {
+                let head = parseInt(document.getElementById('head').value);
+                let size = parseInt(document.getElementById('disk').value);
+                document.getElementById('pointer').style.left = `calc(${(head/size)*100}% - 12px)`;
+            }
+            
+            static showRequestDots(requests) {
+                document.querySelectorAll('.request-dot').forEach(dot => dot.remove());
+                let size = parseInt(document.getElementById('disk').value);
+                requests.forEach(req => {
+                    let dot = document.createElement('div');
+                    dot.className = 'request-dot';
+                    dot.style.left = `${(req/size)*100}%`;
+                    document.getElementById('track').appendChild(dot);
+                });
+            }
+            
+            static updateResults(results) {
+                ['fcfs','sstf','scan','cscan'].forEach(algo => {
+                    let r = results[algo];
+                    document.getElementById(`${algo}-total`).textContent = r.total;
+                    document.getElementById(`${algo}-avg`).textContent = r.avg;
+                    document.getElementById(`${algo}-path`).textContent = r.path.join(' → ');
+                });
+                this.generateGantt(results);
+            }
+            
+            static generateGantt(results) {
+                let html = '<div class="gantt-chart">';
+                let algorithms = [
+                    {key: 'fcfs', name: 'FCFS', color: '#00ffcc'},
+                    {key: 'sstf', name: 'SSTF', color: '#ff3366'},
+                    {key: 'scan', name: 'SCAN', color: '#ffcc00'},
+                    {key: 'cscan', name: 'C-SCAN', color: '#9966ff'}
+                ];
+                
+                algorithms.forEach(algo => {
+                    let result = results[algo.key];
+                    let path = result.path;
+                    
+                    html += `<div class="gantt-algorithm">
+                        <div class="gantt-algo-label">${algo.name}</div>
+                        <div class="gantt-bars">`;
+                    
+                    for(let i=0; i<path.length-1; i++) {
+                        let from = path[i];
+                        let to = path[i+1];
+                        let distance = Math.abs(from - to);
+                        let width = Math.max(30, distance);
+                        
+                        html += `<div class="gantt-bar" style="width: ${width}px; background: ${algo.color};" 
+                                 title="${from} → ${to} (${distance})">${distance}</div>`;
+                    }
+                    
+                    html += '</div></div>';
+                });
+                
+                html += '</div>';
+                document.getElementById('ganttChart').innerHTML = html;
+            }
+            
+            static reset() {
+                document.getElementById('req').value = '98, 183, 37, 122, 14, 124, 65, 67';
+                document.getElementById('head').value = '53';
+                document.getElementById('disk').value = '200';
+                document.getElementById('dir').value = '1';
+                
+                ['fcfs','sstf','scan','cscan'].forEach(algo => {
+                    document.getElementById(`${algo}-total`).textContent = '-';
+                    document.getElementById(`${algo}-avg`).textContent = '-';
+                    document.getElementById(`${algo}-path`).textContent = 'Path will appear here...';
+                });
+                
+                document.querySelectorAll('.request-dot').forEach(dot => dot.remove());
+                document.getElementById('ganttChart').innerHTML = 'Run simulation to view Gantt Chart';
+                this.setPointer();
+                this.showNotification('Reset to default values');
+            }
+            
+            static showNotification(msg) {
+                let n = document.getElementById('notification');
+                n.textContent = msg;
+                n.classList.add('show');
+                setTimeout(() => n.classList.remove('show'), 2000);
+            }
+        }
+
+        async function runSimulation() {
+            let requests = document.getElementById('req').value.split(',').map(x => parseInt(x.trim())).filter(x => !isNaN(x));
+            let head = parseInt(document.getElementById('head').value);
+            let size = parseInt(document.getElementById('disk').value);
+            let dir = parseInt(document.getElementById('dir').value);
+            
+            if (requests.length === 0) {
+                UIController.showNotification('Enter valid disk requests');
+                return;
+            }
+            
+            UIController.showRequestDots(requests);
+            
+            let results = {
+                fcfs: DiskScheduler.FCFS([...requests], head),
+                sstf: DiskScheduler.SSTF([...requests], head),
+                scan: DiskScheduler.SCAN([...requests], head, dir, size),
+                cscan: DiskScheduler.CSCAN([...requests], head, dir, size)
+            };
+            
+            UIController.updateResults(results);
+            
+            // Animate pointer with FCFS path
+            await animatePointer(results.fcfs.path, size);
+            
+            UIController.showNotification('Simulation completed successfully!');
+        }
+
+        async function animatePointer(path, size) {
+            let pointer = document.getElementById('pointer');
+            for (let i = 0; i < path.length; i++) {
+                pointer.style.left = `calc(${(path[i]/size)*100}% - 12px)`;
+                await new Promise(r => setTimeout(r, 300));
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            UIController.updateTrack();
+            UIController.setPointer();
+            
+            document.getElementById('disk').addEventListener('change', () => {
+                UIController.updateTrack();
+                UIController.setPointer();
+            });
+            
+            document.getElementById('head').addEventListener('change', UIController.setPointer);
+            document.getElementById('run-btn').addEventListener('click', runSimulation);
+            document.getElementById('reset-btn').addEventListener('click', () => UIController.reset());
+            
+            // Keyboard shortcuts
+            document.addEventListener('keydown', (e) => {
+                if (e.ctrlKey && e.key === 'Enter') runSimulation();
+                if (e.key === 'Escape') UIController.reset();
+            });
+        });
+    </script>
+</body>
+</html>
